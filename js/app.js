@@ -1,47 +1,52 @@
-var video = document.querySelector('#video');
-var canvas = document.querySelector('#canvas');
-var file = document.querySelector('#videofile');
-var videoControls = document.querySelector('#videoControls');
-var videow = document.querySelector('#videow');
-var snap = document.querySelector('#snap');
-var save = document.querySelector('#save');
-var videoInfo = document.querySelector('#videoInfo');
-var snapSize = document.querySelector('#snapsize');
-var context = canvas.getContext('2d');
-var slider = document.querySelector('#slider');
+var video = document.querySelector("#video");
+var canvas = document.querySelector("#canvas");
+var file = document.querySelector("#videofile");
+var videoControls = document.querySelector("#videoControls");
+var videow = document.querySelector("#videow");
+var snap = document.querySelector("#snap");
+var save = document.querySelector("#save");
+var videoInfo = document.querySelector("#videoInfo");
+var snapSize = document.querySelector("#snapsize");
+var context = canvas.getContext("2d");
+var slider = document.querySelector("#slider");
 var w, h, ratio;
 //add loadedmetadata which will helps to identify video attributes
+const ALL_NAMES = [];
 
 function timeUpdate() {
-  slider.setAttribute('max', Math.ceil(video.duration))
-  slider.value=video.currentTime
-  videoInfo.style.display='block';
+  slider.setAttribute("max", Math.ceil(video.duration));
+  slider.value = video.currentTime;
+  videoInfo.style.display = "block";
   videoInfo.innerHTML = [
     "Video size: " + video.videoWidth + "x" + video.videoHeight,
-    "Video length: " + (Math.round(video.duration * 10) / 10) + "sec",
-    "Playback position: " + (Math.round(video.currentTime * 10) / 10) + "sec",
-  ].join('<br>');
+    "Video length: " + Math.round(video.duration * 10) / 10 + "sec",
+    "Playback position: " + Math.round(video.currentTime * 10) / 10 + "sec",
+  ].join("<br>");
 }
 
-function goToTime(video,time){
-  video.currentTime=Math.min(video.duration,Math.max(0,time));
-  timeUpdate()
+function goToTime(video, time) {
+  video.currentTime = Math.min(video.duration, Math.max(0, time));
+  timeUpdate();
 }
 
-video.addEventListener('timeupdate', timeUpdate)
+video.addEventListener("timeupdate", timeUpdate);
 
-video.addEventListener('loadedmetadata', function () {
-  console.log("Metadata loaded");
-  videow.value = video.videoWidth;
-  videoInfo.innerHTML = [
-    "Video size: " + video.videoWidth + "x" + video.videoHeight,
-    "Video length: " + (Math.round(video.duration * 10) / 10) + "sec",
-  ].join('<br>');
-  video.objectURL = false;
-  video.play();
-  video.pause();
-  resize();
-}, false);
+video.addEventListener(
+  "loadedmetadata",
+  function () {
+    console.log("Metadata loaded");
+    videow.value = video.videoWidth;
+    videoInfo.innerHTML = [
+      "Video size: " + video.videoWidth + "x" + video.videoHeight,
+      "Video length: " + Math.round(video.duration * 10) / 10 + "sec",
+    ].join("<br>");
+    video.objectURL = false;
+    video.play();
+    video.pause();
+    resize();
+  },
+  false
+);
 
 function resize() {
   ratio = video.videoWidth / video.videoHeight;
@@ -61,8 +66,10 @@ function selectVideo() {
   file.click();
 }
 
-function loadVideoFile() {
-  var fileInput = file.files[0];
+function loadVideoFile(fileInput) {
+  if (!fileInput) {
+    fileInput = file.files[0];
+  }
   if (fileInput) {
     console.log("Loading...");
     console.log(fileInput);
@@ -90,21 +97,7 @@ function loadVideoFile() {
     videow.removeAttribute("readonly");
     snap.disabled = false;
     save.disabled = false;
-    videoControls.style.display = '';
-  }
-}
-
-function loadVideoFromFile(file) {
-  let reader = new FileReader();
-  reader.readAsArrayBuffer(file);
-  reader.onload = function (e) {
-    // The file reader gives us an ArrayBuffer:
-    let buffer = e.target.result;
-    // We have to convert the buffer to a blob:
-    let videoBlob = new Blob([new Uint8Array(buffer)], { type: 'video/mp4' });
-    // The blob gives us a URL to the video file:
-    let url = window.URL.createObjectURL(videoBlob);
-    video.src = url;
+    videoControls.style.display = "";
   }
 }
 
@@ -116,35 +109,74 @@ function loadVideoURL(url) {
   save.disabled = false;
 }
 
-function savePicture(btn) {
-  btn.disabled = true
-  var dataURL = canvas.toDataURL();
-  var link = document.getElementById("imagelink");
-  link.style.display = '';
-  link.style.opacity = 0
-  link.href = dataURL;
-  var rnd = Math.round((Math.random() * 10000));
-  link.setAttribute("download", "video-capture-" + rnd + ".png");
-  link.click();
-  setTimeout(function(){
-    btn.disabled = false
-    link.style.display = 'none';
-  },100)
+function savePicture(fileName) {
+  return new Promise((resolve, reject) => {
+    // btn.disabled = true;
+    var dataURL = canvas.toDataURL();
+    var link = document.getElementById("imagelink");
+    link.style.display = "";
+    link.style.opacity = 0;
+    link.href = dataURL;
+    var rnd = Math.round(Math.random() * 10000);
+    link.setAttribute("download", fileName + ".jpg");
+    link.click();
+    setTimeout(function () {
+      // btn.disabled = false;
+      link.style.display = "none";
+      resolve();
+    }, 100);
+  });
 }
 
 window.addEventListener("load", function () {
-  var buttons = document.querySelectorAll('button');
+  var buttons = document.querySelectorAll("button");
   for (let index = 0; index < buttons.length; index++) {
     var element = buttons[index];
-    element.addEventListener('click', function () {
+    element.addEventListener("click", function () {
       var name = this.innerText.trim();
       var category = "button";
-      if (this.getAttribute('category') == 'controls') {
-        name = 'Video Controls';
+      if (this.getAttribute("category") == "controls") {
+        name = "Video Controls";
         category = "controls";
       }
-      var id = name.toLowerCase().replace(' ', '_');
+      var id = name.toLowerCase().replace(" ", "_");
       gtag("event", category + "-" + id, {});
-    })
+    });
   }
-})
+});
+
+async function start() {
+  // ALL_NAMES.forEach(async (name) => {
+  for (let i = 0; i < ALL_NAMES.length; i++) {
+    const name = ALL_NAMES[i];
+    const res = await fetch(`assets/${name}.mp4`)
+      .then((response) => {
+        console.log(response);
+        return response.blob();
+      })
+      .then((blob) => {
+        return loadVideoFile(blob);
+      })
+      .then(async () => {
+        await sleep();
+        return snapPicture();
+      })
+      .then(async () => {
+        await sleep();
+        return savePicture(name);
+      });
+  }
+  // });
+
+  //  for (var i = 0; i < jsons.length; i++) {
+  //    zip.file(languages[i] + ".json", jsons[i]);
+  //  }
+
+  // zip.generateAsync({ type: "blob" }).then(function (content) {
+  // fileSaver.saveAs(content, "thumbs.zip");
+  // });
+}
+
+function sleep() {
+  return new Promise((resolve) => setTimeout(resolve, 500));
+}
